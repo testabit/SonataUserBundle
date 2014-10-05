@@ -57,14 +57,27 @@ class ProfileFOSUser1Controller extends Controller
             throw new AccessDeniedException('This user does not have access to this section.');
         }
 
-        $form = $this->container->get('sonata.user.authentication.form');
+        $form = $this->container->get('sonata.user.authentication.form_factory');
         $formHandler = $this->container->get('sonata.user.authentication.form_handler');
 
-        $process = $formHandler->process($user);
-        if ($process) {
-            $this->setFlash('sonata_user_success', 'profile.flash.updated');
 
-            return new RedirectResponse($this->generateUrl('sonata_user_profile_show'));
+        $formFactory = $this->container->get('fos_user.profile.form.factory');
+
+        $form = $formFactory->createForm();
+        $form->setData($user);
+
+        if ('POST' === $request->getMethod()) {
+            $form->bind($request);
+
+            if ($form->isValid()) {
+                /** @var $userManager \FOS\UserBundle\Model\UserManagerInterface */
+                $userManager = $this->container->get('fos_user.user_manager');
+                $userManager->updateUser($user);
+
+                $this->setFlash('sonata_user_success', 'profile.flash.updated');
+
+                return new RedirectResponse($this->generateUrl('sonata_user_profile_show'));
+            }
         }
 
         return $this->render('SonataUserBundle:Profile:edit_authentication.html.twig', array(
