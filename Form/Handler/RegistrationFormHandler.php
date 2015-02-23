@@ -17,7 +17,6 @@ use Symfony\Component\HttpFoundation\Request;
 
 use FOS\UserBundle\Model\UserInterface;
 use FOS\UserBundle\Model\UserManagerInterface;
-use FOS\UserBundle\Form\Handler\RegistrationFormHandler as BaseHandler;
 
 /**
  *
@@ -25,6 +24,6 @@ use FOS\UserBundle\Form\Handler\RegistrationFormHandler as BaseHandler;
  *
  *    (c) FriendsOfSymfony <http://friendsofsymfony.github.com/>
  */
-class RegistrationFormHandler extends BaseHandler
+class RegistrationFormHandler
 {
 }

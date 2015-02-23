@@ -43,38 +43,42 @@ class RegistrationFOSUser1Controller extends ContainerAware
         }
 
         $form = $this->container->get('sonata.user.registration.form');
-        $formHandler = $this->container->get('sonata.user.registration.form.handler');
-        $confirmationEnabled = $this->container->getParameter('fos_user.registration.confirmation.enabled');
+        $form->setData($user);
 
-        $process = $formHandler->process($confirmationEnabled);
-        if ($process) {
-            $user = $form->getData();
+        if ('POST' === $request->getMethod()) {
+            $form->bind($request);
 
-            $authUser = false;
-            if ($confirmationEnabled) {
-                $this->container->get('session')->set('fos_user_send_confirmation_email/email', $user->getEmail());
-                $url = $this->container->get('router')->generate('fos_user_registration_check_email');
-            } else {
-                $authUser = true;
-                $route = $this->container->get('session')->get('sonata_basket_delivery_redirect');
+            if ($form->isValid()) {
+                $confirmationEnabled = $this->container->getParameter('fos_user.registration.confirmation.enabled');
 
-                if (null !== $route) {
-                    $this->container->get('session')->remove('sonata_basket_delivery_redirect');
-                    $url = $this->container->get('router')->generate($route);
+                $user = $form->getData();
+
+                $authUser = false;
+                if ($confirmationEnabled) {
+                    $this->container->get('session')->set('fos_user_send_confirmation_email/email', $user->getEmail());
+                    $url = $this->container->get('router')->generate('fos_user_registration_check_email');
                 } else {
-                    $url = $this->container->get('session')->get('sonata_user_redirect_url');
+                    $authUser = true;
+                    $route = $this->container->get('session')->get('sonata_basket_delivery_redirect');
+
+                    if (null !== $route) {
+                        $this->container->get('session')->remove('sonata_basket_delivery_redirect');
+                        $url = $this->container->get('router')->generate($route);
+                    } else {
+                        $url = $this->container->get('session')->get('sonata_user_redirect_url');
+                    }
                 }
+
+                $this->setFlash('fos_user_success', 'registration.flash.user_created');
+
+                $response = new RedirectResponse($url);
+
+                if ($authUser) {
+                    $this->authenticateUser($user, $response);
+                }
+
+                return $response;
             }
-
-            $this->setFlash('fos_user_success', 'registration.flash.user_created');
-
-            $response = new RedirectResponse($url);
-
-            if ($authUser) {
-                $this->authenticateUser($user, $response);
-            }
-
-            return $response;
         }
 
         $this->container->get('session')->set('sonata_user_redirect_url', $this->container->get('request')->headers->get('referer'));
